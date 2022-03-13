@@ -5,6 +5,7 @@ import List from "./classCom/list"
 import Props from './classCom/props'
 import FProps from './funCom/props'
 import Shoukong from "./classCom/shoukong.jsx"
+import Child from "./classCom/child"
 export default function Basic() {
   return (
     <section>
@@ -18,6 +19,14 @@ export default function Basic() {
       <Props/>
       <FProps bg="skyblue" title="函数式组件props使用"/>
       <Shoukong />
+      <Child>
+        <div>
+          向插槽写入的内容1
+        </div>
+        <div>
+          向插槽写入的内容2
+        </div>
+      </Child>
     </section>
   )
 }
