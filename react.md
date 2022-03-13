@@ -61,11 +61,31 @@ export default function props(props) {
 5. 属性能设置子组件初始值，状态不可以
 6. 属性可以修改子组件的值，状态不可以
 - state 的主要作用是用于组件保存、控制、修改自己的可变状态。 state 在组件内部初始化，可以被组件自身修改，而外部不能访问也不能修改。你可以认为 state 是一个局部的、只能被组件自身控制的数据源。 state 中状态可以通过 this.setState 方法进行更新， setState 会导致组件的重新渲
-染。
+  染。
 - props 的主要作用是让使用该组件的父组件可以传入参数来配置该组件。它是外部传进来的配置参数，组件内部无法控制也无法修改。除非外部组件主动传入新的 props ，否则组件的 props 永远保持
 不变。
-
 - 没有 state 的组件叫无状态组件（stateless component），设置了 state 的叫做有状态组件 （stateful component）。因为状态会带来管理的复杂性，我们尽量多地写无状态组件，尽量少地写有 状态的组件。这样会降低代码维护的难度，也会在一定程度上增强组件的可复用性。
+
+#### 插槽
+
+```jsx
+import React, { Component } from 'react'
+
+export default class child extends Component {
+  render() {
+    return (
+      <div>
+        <h2>插槽</h2>
+        {/* 会显示完 */}
+        {this.props.children}
+        {/* 出入一一对应展示 */}
+        {this.props.children[0]}
+        {this.props.children[1]}
+      </div>
+    )
+  }
+}
+```
 
 #### 组件通信
 1. 父子组件通信方式
@@ -151,3 +171,299 @@ dom渲染之前返回一个值，作为componentDidUpdate的第三个参数。
 - PureComponent
   - PureComponent会帮你 比较新props 跟 旧的props， 新的state和老的state（值相等,或者 对象含有相同的属性、且属性值相等 ），决定shouldcomponentUpdate 返回true 或者 false， 从而决定要不要呼叫 render function。
   - 如果你的 state 或 props 『永远都会变』，那 PureComponent 并不会比较快，因为 shallowEqual 也需要花时间。
+
+#### React Hooks
+
+使用hooks理由
+
+1. 高阶组件为了复用，导致代码层级复杂
+2. 生命周期的复杂 
+3. 写成functional组件,无状态组件 ，因为需要状态，又改成了class,成本高
+
+##### useState (保存组件状态)
+
+const [state, setstate] = useState(initialState)
+
+```jsx
+import React, {useState} from 'react'
+
+export default function useStateDemo() {
+  const [name, setName] = useState('skye')
+  const [age] = useState(18)
+  return (
+    <div>
+      <h2>useState</h2>
+      <div>
+        <button onClick={() => {
+          setName('skye' + Math.random().toFixed(2))
+        }}>change</button>
+        name: {name} &nbsp;
+        age: {age}
+      </div>
+    </div>
+  )
+}
+```
+##### useEffect(处理副作用)和useLayoutEffect (同步执行副作用)
+
+Function Component 不存在生命周期，所以不要把 Class Component 的生命周期概念搬过来试图对号入座。
+
+- useEffect
+
+```jsx
+useEffect(() => {
+    //effect
+    return () => {
+    //cleanup(销毁处理)
+    };
+}, [依赖的状态;空数组,表示不依赖])
+```
+
+- useEffect和useLayoutEffect有什么区别？
+
+  简单来说就是调用时机不同， useLayoutEffect 和原来 componentDidMount & componentDidUpdate 一致，在 react完成DOM更新后马上同步调用的代码，会阻塞页面渲染。而 useEffect 是会在整个页面渲染完才会调用的 代码。
+
+  官方建议优先使用 useEffect
+
+- 在实际使用时如果想避免页面抖动（在 useEffect 里修改DOM很有可能出现）的话，可以把需要操作DOM的代码 放在 useLayoutEffect 里。在这里做点dom操作，这些dom修改会和 react 做出的更改一起被一次性渲染到屏幕 上，只有一次回流、重绘的代价。
+
+##### useCallback(记忆函数)
+
+防止因为组件重新渲染，导致方法被重新创建 ，起到缓存作用; 只有第二个参数 变化了，才重新声明一次
+
+```jsx
+const handleClick = useCallback(()=>{
+console.log(name)
+},[name])
+<button onClick={()=>handleClick()}>hello</button>
+//只有name改变后， 这个函数才会重新声明一次，
+//如果传入空数组， 那么就是第一次创建后就被缓存， 如果name后期改变了,拿到的还是老的name。
+//如果不传第二个参数，每次都会重新声明一次，拿到的就是最新的name.
+```
+
+##### useMemo 记忆组件
+
+useCallback 的功能完全可以由 useMemo 所取代，如果你想通过使用 useMemo 返回一个记忆函数也是完全可以 的。
+
+useCallback 不会执行第一个参数函数，而是将它返回给你，而 useMemo 会执行第一个函数并 且将函数执行结果返回给你。所以在前面的例子中，可以返回 handleClick 来达到存储函数的目的。 所以 useCallback 常用记忆事件函数，生成记忆后的事件函数并传递给子组件使用。而 useMemo 更适合经过函数 计算得到一个确定的值，比如记忆组件。
+
+- 相当于vue中的计算属性
+
+```jsx
+import React, { useEffect, useMemo, useState } from 'react'
+import axios from 'axios'
+export default function UseMemo() {
+  const [val, setVal] = useState('')
+  const [list, setList] = useState([])
+  useEffect(() => {
+    axios.get('/data.json').then(res => {
+      if(JSON.stringify(res.data.list) === JSON.stringify(list)) {
+        return
+      }
+      setList(res.data.list)
+    }).catch(err => {
+      console.log(err)
+    })
+  }, [list])
+  const filterList = useMemo(() => 
+    list.filter(item => 
+      item.includes(val)
+    , [val, list])
+  )
+  return (
+    <div>
+      <h2>UseMemo{val}</h2>
+      <input type="text" value={val}  onChange={(e) => {
+        setVal(e.target.value)
+      }}/>
+      <ul>
+        {
+          filterList.map((item) => 
+          <li key={item}>{item}</li>
+          )
+        }
+      </ul>
+    </div>
+  )
+}
+
+```
+
+##### useRef(保存引用值)
+
+```jsx
+const myswiper = useRef(null);
+<Swiper ref={myswiper}/>
+```
+
+也可以保存变量
+
+```jsx
+let count = useRef(0)
+// 修改
+count.current++
+```
+##### useContext
+```jsx
+import React, {useContext, useEffect, useState} from 'react'
+const GlobalContext  = React.createContext() //创建context对象
+export default function UseContext() {
+  const [list, setList] = useState([])
+  const [info, setInfo] = useState('')
+  useEffect(() => {
+    setTimeout(() => {
+      setList([
+        {
+          id:1,
+          title: '111',
+          text: 'dec111'
+        },
+        {
+          id:2,
+          title: '222',
+          text: 'dec222'
+        },
+        {
+          id:3,
+          title: '333',
+          text: 'dec333'
+        }
+      ])
+    },1000)
+  },[])
+  return (
+    <GlobalContext.Provider value={
+      {
+        info:info,
+        changeInfo: (val) => {
+          setInfo(val)
+        }
+      }
+    }>
+      <div>
+        <h2>UseContext{info}</h2>
+        <div>
+          <Left list={list}></Left>
+          <Right></Right>
+        </div>
+      </div>
+    </GlobalContext.Provider>
+  )
+}
+function Left(props) {
+  let {list} = props
+  const value = useContext(GlobalContext)
+  return (
+    <div>
+      <h2>Left</h2>
+      <ul>
+        {
+          list.map(item => 
+            <li key={item.id} onClick={()=> {
+              value.changeInfo(item.text)
+            }}>{item.title}</li>
+          )
+        }
+      </ul>
+    </div>
+  )
+}
+function Right() {
+  const value = useContext(GlobalContext)
+  return (
+    <div>
+      <h2>Detail:</h2>
+      <div>
+        {value.info}
+      </div>
+    </div>
+  )
+}
+
+
+```
+
+##### useReducer
+
+```jsx
+import React,{useReducer,useContext} from 'react'
+
+const initailState = {
+    a:"11111",
+    b:"11111"
+}
+
+const reducer = (prevState,action)=>{
+    let newstate = {...prevState}
+    switch(action.type){
+        case "change-a":
+            newstate.a = action.value
+            return newstate
+        case "change-b":
+            newstate.b = action.value
+            return newstate
+        default:
+            return prevState
+    }
+    // return prevState
+}
+
+const GlobalContext = React.createContext()
+export default function App() {
+    const [state, dispatch] = useReducer(reducer, initailState)
+    
+    return (
+        <GlobalContext.Provider value={
+            {
+                state,
+                dispatch
+            }
+        }>
+            <div>
+                <Child1/>
+                <Child2/>
+                <Child3/>
+            </div>
+        </GlobalContext.Provider>
+    )
+}
+
+function Child1(){
+    const {dispatch} = useContext(GlobalContext)
+    return <div style={{background:"red"}}>
+        <button onClick={()=>{
+            dispatch({
+                type:"change-a",
+                value:"2222222"
+            })
+        }}>改变a</button>
+        <button onClick={()=>{
+            dispatch({
+                type:"change-b",
+                value:"333333"
+            })
+        }}>改变b</button>
+    </div>
+}
+
+function Child2(){
+    const {state} = useContext(GlobalContext)
+    return <div style={{background:"yellow"}}>
+        child2-{state.a}
+    </div>
+}
+
+function Child3(){
+    const {state} = useContext(GlobalContext)
+    return <div style={{background:"gray"}}>
+        child3-{state.b}
+    </div>
+}
+```
+
+##### 自定义hooks
+
+**必须以“use”开头**。这个约定非常重要。不遵循的话，由于无法判断某个函数是否包含对其内部 Hook 的调用，React 将无法自动检查你的 Hook 是否违反了 Hook 的规则
+
+#### React 路由
+

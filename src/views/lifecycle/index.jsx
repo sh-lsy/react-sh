@@ -32,9 +32,9 @@
 import React from 'react'
 
 export default function index() {
-  function getDerivedStateFromProps() {
-    console.log(12121);
-  }
+  // function getDerivedStateFromProps() {
+  //   console.log(12121);
+  // }
   return (
     <div>index</div>
   )
