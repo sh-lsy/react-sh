@@ -1,7 +1,8 @@
 import React from 'react'
-
-export default function homeDec() {
+import style from './home.module.css'
+export default function homeDec(props) {
+  console.log(props);
   return (
-    <div>homeDec</div>
+    <div className={style.mBlue}>homeDec</div>
   )
 }
