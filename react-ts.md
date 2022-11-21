@@ -26,4 +26,13 @@
 
 - `npm install eslint -D`
 
+- npx eslint --init
+
+- `npm install normalize.css`
+
+- `npm install craco-less` || `npm install craco-less@2.1.0-alpha.0`
+
+- `npm install react-router-dom`
+
 - 
+
