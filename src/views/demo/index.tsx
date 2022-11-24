@@ -8,11 +8,11 @@ interface IProps {
 const demo: FC<IProps> = () => {
   return (
     <div>
+      demo
       <div className="nav">
         <Link to="/demo/child1">child1</Link>
         <Link to="/demo/child2">child2</Link>
       </div>
-      demo
       <Suspense fallback="">
         <Outlet />
       </Suspense>
